@@ -1,46 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Add an Offspace</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Add an Offspace</title>
+    <script src="index.js"></script>
+    <script src="bootstrap/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.css"/>
 </head>
 <body>
-  <h1>Add an Offspace</h1>
-  <p>Here, you can add an offspace to the list</p>
-  <p>Submissions will be reviewed before publishing.</p>
-  <p>Once you submit your offspace, you will receive an edit code. Keep this code safe - you can use it to edit the entry. Edited entries will be reviewed again.</p>
-  <hr/>
-  <form id="offspace">
-    <p>
-      <label for="name">Name:</label>
-      <input type="text" id="name" name="name" value="" />
-    </p>
-    <p>
-      <label for="street">Street name and house number:</label>
-      <input type="text" id="street" name="street" value="" />
-    </p>
-    <p>
-      <label for="postcode">Postcode:</label>
-      <input type="text" id="postcode" name="postcode" value="" />
-    </p>
-    <p>
-      <label for="city">City:</label>
-      <input type="text" id="city" name="city" value="" />
-    </p>
-    <p>
-      <label for="website">Website:</label>
-      <input type="text" id="website" name="website" value="" />
-    </p>
-    <p>
-      <label for="socialMedia">Social media:</label>
-      <input type="text" id="socialMedia" name="socialMedia" value="" />
-    </p>
-    <p>
-      <label for="photo">Upload a representative picture of your offspace:</label>
-      <input type="file" id="photo" name="photo" required />
-    </p>
-    <input type="submit" value="Submit" />
-  </form>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <h1>Add an Offspace</h1>
+                <p>Here, you can add an offspace to the list</p>
+                <p>Submissions will be reviewed before publishing.</p>
+                <p>Once you submit your offspace, you will receive an edit code. Keep this code safe - you can use it to edit the entry.
+                    Edited entries will be reviewed again.</p>
+                <a type="button" class="btn btn-primary" href="index.html">Back</a>
+                <hr/>
+                <form id="offspace">
+                    <p>
+                        <label for="name">Name:</label>
+                        <input type="text" id="name" name="name" value=""/>
+                    </p>
+                    <p>
+                        <label for="street">Street name and house number:</label>
+                        <input type="text" id="street" name="street" value=""/>
+                    </p>
+                    <p>
+                        <label for="postcode">Postcode:</label>
+                        <input type="text" id="postcode" name="postcode" value=""/>
+                    </p>
+                    <p>
+                        <label for="city">City:</label>
+                        <input type="text" id="city" name="city" value=""/>
+                    </p>
+                    <p>
+                        <label for="website">Website:</label>
+                        <input type="text" id="website" name="website" value=""/>
+                    </p>
+                    <p>
+                        <label for="socialMedia">Social media:</label>
+                        <input type="text" id="socialMedia" name="socialMedia" value=""/>
+                    </p>
+                    <p>
+                        <label for="photo">Upload a representative picture of your offspace:</label>
+                        <input type="file" id="photo" name="photo" required/>
+                    </p>
+                    <input type="submit" value="Submit" id="submitButton"/>
+                </form>
+            </div>
+        </div>
+    </div>
 </body>
 <script src="submit.js"></script>
 </html>

@@ -1,10 +1,18 @@
 package main
 
 import (
+	"encoding/base64"
+	"errors"
 	"flag"
+	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	"image"
+	"image/jpeg"
+	"regexp"
+	"strings"
 )
 
+var maxFileSize = 1 * 1024 * 1024 // 1MB
 var adminPassword *string
 
 func main() {
@@ -17,6 +25,23 @@ func main() {
 }
 
 func createOffspace(offspace OffspaceRest) error {
+	imgBytes, err := decodeBase64Image(offspace.Photo)
+	if err != nil || len(imgBytes) > maxFileSize || len(imgBytes) == 0 || !isJPEG(imgBytes) {
+	}
+	if len(imgBytes) > maxFileSize {
+		return errors.New("image exceeds size limit")
+	}
+
+	if !isJPEG(imgBytes) {
+		return errors.New("image is not valid JPEG")
+
+	}
+
+	// Optional: Try decoding to ensure it's a valid JPEG image
+	_, err = jpeg.Decode(strings.NewReader(string(imgBytes)))
+	if err != nil {
+		return errors.New("invalid JPEG image")
+	}
 	return dbAdapter.createOffspace(offspace)
 }
 
@@ -45,6 +70,7 @@ func mapOffspaceToRest(offspace Offspace) OffspaceRest {
 	return OffspaceRest{
 		Id:          offspace.Id,
 		Name:        offspace.Name,
+		Bio:         offspace.Bio,
 		Street:      offspace.Street,
 		Postcode:    offspace.Postcode,
 		City:        offspace.City,
@@ -52,4 +78,19 @@ func mapOffspaceToRest(offspace Offspace) OffspaceRest {
 		SocialMedia: offspace.SocialMedia,
 		Photo:       offspace.Photo,
 	}
+}
+
+func isJPEG(imgBytes []byte) bool {
+	_, format, err := image.DecodeConfig(strings.NewReader(string(imgBytes)))
+	return err == nil && format == "jpeg"
+}
+
+func decodeBase64Image(data string) ([]byte, error) {
+	// Remove the data:image/jpeg;base64, header
+	re := regexp.MustCompile(`^data:image\/jpeg;base64,`)
+	if !re.MatchString(data) {
+		return nil, fmt.Errorf("image must be base64-encoded JPEG")
+	}
+	base64Data := re.ReplaceAllString(data, "")
+	return base64.StdEncoding.DecodeString(base64Data)
 }

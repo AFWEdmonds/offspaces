@@ -12,6 +12,7 @@ import (
 type OffspaceRest struct {
 	Id          int64
 	Name        string
+	Bio         string
 	Street      string
 	Postcode    string
 	City        string
@@ -21,14 +22,14 @@ type OffspaceRest struct {
 }
 
 func (o OffspaceRest) String() string {
-	return fmt.Sprintf("%d, %s, %s, %s, %s, %s, %s, %s", o.Id, o.Name, o.Street, o.Postcode, o.City, o.Website, o.SocialMedia, o.Photo)
+	return fmt.Sprintf("%d, %s, %s, %s, %s, %s, %s, %s, %s", o.Id, o.Name, o.Bio, o.Street, o.Postcode, o.City, o.Website, o.SocialMedia, o.Photo)
 }
 
 func startServer() {
 	http.HandleFunc("/", getRoot)
-	http.HandleFunc("/publish", getPublish)
-	http.HandleFunc("/create", postOffspace)
-	http.HandleFunc("/update", putOffspace)
+	http.HandleFunc("/publish/", getPublish)
+	http.HandleFunc("/create/", postOffspace)
+	http.HandleFunc("/update/", putOffspace)
 	err2 := http.ListenAndServe(":3333", nil)
 	if errors.Is(err2, http.ErrServerClosed) {
 		fmt.Printf("server closed\n")
@@ -39,6 +40,7 @@ func startServer() {
 }
 
 func getRoot(w http.ResponseWriter, r *http.Request) {
+	enableCORS(w)
 	fmt.Printf("got / get request\n")
 	var offspaces []OffspaceRest
 	offspaces, err := getOffspaces(true)
@@ -47,12 +49,18 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, fmt.Sprintf("read error: %s", err))
 		return
 	}
-	for _, offspace := range offspaces {
-		io.WriteString(w, offspace.String())
+	response, err := json.Marshal(offspaces)
+	if err != nil {
+		fmt.Errorf("read error: %v", err)
+		io.WriteString(w, fmt.Sprintf("read error: %s", err))
+		return
 	}
+	io.WriteString(w, string(response))
+
 }
 
 func getPublish(w http.ResponseWriter, r *http.Request) {
+	enableCORS(w)
 	fmt.Printf("got /publish get request\n")
 	var offspaces []OffspaceRest
 	offspaces, err := getOffspaces(false)
@@ -68,10 +76,11 @@ func getPublish(w http.ResponseWriter, r *http.Request) {
 }
 
 func postOffspace(w http.ResponseWriter, r *http.Request) {
+	enableCORS(w)
 	data := OffspaceRest{}
 	fmt.Printf("got post request\n")
 	body, err := io.ReadAll(r.Body)
-	if err != nil {
+	if err == nil {
 		err = json.Unmarshal(body, &data)
 	}
 	if err != nil {
@@ -84,6 +93,7 @@ func postOffspace(w http.ResponseWriter, r *http.Request) {
 }
 
 func putOffspace(w http.ResponseWriter, r *http.Request) {
+	enableCORS(w)
 	data := Offspace{}
 	fmt.Printf("got put request\n")
 	body, err := io.ReadAll(r.Body)
@@ -93,8 +103,17 @@ func putOffspace(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 	} else {
-		if updateOffspace(data, r.URL.Query().Get("password")) != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+		err = updateOffspace(data, r.URL.Query().Get("password"))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		} else {
+			w.WriteHeader(http.StatusOK)
 		}
 	}
+}
+
+func enableCORS(w http.ResponseWriter) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:63342")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 }

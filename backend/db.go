@@ -11,18 +11,26 @@ import (
 type Offspace struct {
 	Id          int64
 	Name        string
+	Bio         string
 	Street      string
 	Postcode    string
-	City        string
+	City        Tag
 	Website     string
 	SocialMedia string
 	Photo       string
 	Published   bool
 	EditKey     string
+	Tags        []Tag
+}
+
+type Tag struct {
+	Id     int64
+	Name   string
+	IsCity bool
 }
 
 func (o Offspace) String() string {
-	return fmt.Sprintf("%d, %s, %s, %s, %s, %s, %s, %s, %d, %s", o.Id, o.Name, o.Street, o.Postcode, o.City, o.Website, o.SocialMedia, o.Photo, o.Published, o.EditKey)
+	return fmt.Sprintf("%d, %s, %s, %s, %s, %s, %s, %s, %d, %s", o.Id, o.Name, o.Bio, o.Street, o.Postcode, o.City, o.Website, o.SocialMedia, o.Photo, o.Published, o.EditKey)
 }
 
 // DB implement namespace
@@ -54,7 +62,7 @@ func (DB) queryOffspaces(checkPublished bool) ([]Offspace, error) {
 	var rows *sql.Rows
 	var err error
 	if checkPublished {
-		rows, err = dbAdapter.Db.Query("SELECT * FROM offspace WHERE published=true")
+		rows, err = dbAdapter.Db.Query("SELECT * FROM offspace WHERE published=false")
 	} else {
 		rows, err = dbAdapter.Db.Query("SELECT * FROM offspace")
 	}
@@ -64,7 +72,7 @@ func (DB) queryOffspaces(checkPublished bool) ([]Offspace, error) {
 	defer rows.Close()
 	for rows.Next() {
 		var off Offspace
-		if err := rows.Scan(&off.Id, &off.Name, &off.Street, &off.Postcode, &off.City, &off.Website, &off.SocialMedia, &off.Photo, &off.Published, &off.EditKey); err != nil {
+		if err := rows.Scan(&off.Id, &off.Name, &off.Name, &off.Street, &off.Postcode, &off.City, &off.Website, &off.SocialMedia, &off.Photo, &off.Published, &off.EditKey); err != nil {
 			return nil, fmt.Errorf("offspace: %v", err)
 		}
 		offspaces = append(offspaces, off)
@@ -74,13 +82,13 @@ func (DB) queryOffspaces(checkPublished bool) ([]Offspace, error) {
 
 func (DB) createOffspace(o OffspaceRest) error {
 	editUuid, err := uuid.NewRandom()
-	rows, err := dbAdapter.Db.Exec("INSERT INTO offspace (name, street, postcode, city, website, social_media, photo, published, edit_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		o.Name, o.Street, o.Postcode, o.City, o.Website, o.SocialMedia, o.Photo, false, editUuid)
+	rows, err := dbAdapter.Db.Exec("INSERT INTO offspace (name, bio, street, postcode, city, website, social_media, photo, published, edit_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		o.Name, o.Bio, o.Street, o.Postcode, o.City, o.Website, o.SocialMedia, o.Photo, false, editUuid)
 	if err != nil {
 		return err
 	}
 	lastInsertId, err := rows.LastInsertId()
-	fmt.Println(fmt.Sprintf("Added row with id: %d, and contents %s", lastInsertId, o.String()))
+	fmt.Println(fmt.Sprintf("Added row with id: %d, and contents %d %s %s %s %s %s %s %s", lastInsertId, o.Id, o.Name, o.Bio, o.Street, o.City, o.Postcode, o.Website, o.SocialMedia))
 	return err
 }
 
@@ -89,8 +97,8 @@ func (DB) updateOffspace(o Offspace, admin bool) error {
 	if !admin {
 		o.Published = false
 	}
-	rows, err := dbAdapter.Db.Exec("UPDATE offspace SET name = ?, street = ?, postcode = ?, city = ?, website = ?, social_media = ?, photo = ?, published = ?, edit_key = ? WHERE edit_key = ?",
-		o.Name, o.Street, o.Postcode, o.City, o.Website, o.SocialMedia, o.Photo, o.Published, o.EditKey, o.EditKey)
+	rows, err := dbAdapter.Db.Exec("UPDATE offspace SET name = ?, bio = ?, street = ?, postcode = ?, city = ?, website = ?, social_media = ?, photo = ?, published = ?, edit_key = ? WHERE edit_key = ?",
+		o.Name, o.Bio, o.Street, o.Postcode, o.City, o.Website, o.SocialMedia, o.Photo, o.Published, o.EditKey, o.EditKey)
 	if err != nil {
 		return err
 	}

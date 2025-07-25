@@ -2,13 +2,32 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Offspaces</title>
-  <script></script>
+    <script src="index.js"></script>
+    <script src="bootstrap/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.css"/>
 </head>
-<body>
-    <h1>Offspaces</h1>
-    <p>This is a list of offspaces in Frankfurt and Offenbach am Main</p>
-    <p>If you are responsible for an offspace you can add it to this list <a href="submit.html">here</a></p>
-    <hr/>
+<body style="background-color: lightgray">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12" style="background-color: white; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px">
+                <hr/>
+                <h1>Offspaces</h1>
+                <p>This is a list of offspaces in Frankfurt and Offenbach am Main</p>
+                <p>If you are responsible for an offspace you can add it to this list <a href="submit.html">here</a></p>
+                <hr/>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="row" style="background-color: lightgray">
+            <div class="offset-md-1 col-md-10">
+                <div id="content">
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
+
 </html>

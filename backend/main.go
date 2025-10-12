@@ -53,9 +53,14 @@ func deleteOffspace() {
 	//todo
 }
 
-func getOffspaces(checkPublished bool) ([]OffspaceRest, error) {
-	offspaces, err := dbAdapter.queryOffspaces(checkPublished)
+func getOffspaces(checkPublished bool, tags []int) ([]OffspaceRest, error) {
+	offspaces, err := dbAdapter.queryOffspaces(checkPublished, tags)
 	return mapOffspaceToRestArray(offspaces), err
+}
+
+func getTags(checkPublished bool) ([]TagRest, error) {
+	tags, err := dbAdapter.queryTags(checkPublished)
+	return mapTagToRestArray(tags), err
 }
 
 func mapOffspaceToRestArray(offspace []Offspace) []OffspaceRest {
@@ -66,6 +71,23 @@ func mapOffspaceToRestArray(offspace []Offspace) []OffspaceRest {
 	return offspaces
 }
 
+func mapTagToRestArray(tag []Tag) []TagRest {
+	tags := make([]TagRest, len(tag))
+	for i := 0; i < len(tag); i++ {
+		tags[i] = mapTagToRest(tag[i])
+	}
+	return tags
+}
+
+func mapTagToRest(tag Tag) TagRest {
+	return TagRest{
+		Id:        tag.Id,
+		Name:      tag.Name,
+		IsCity:    tag.IsCity,
+		Published: tag.Published,
+	}
+}
+
 func mapOffspaceToRest(offspace Offspace) OffspaceRest {
 	return OffspaceRest{
 		Id:          offspace.Id,
@@ -73,7 +95,7 @@ func mapOffspaceToRest(offspace Offspace) OffspaceRest {
 		Bio:         offspace.Bio,
 		Street:      offspace.Street,
 		Postcode:    offspace.Postcode,
-		City:        offspace.City,
+		City:        mapTagToRest(offspace.City),
 		Website:     offspace.Website,
 		SocialMedia: offspace.SocialMedia,
 		Photo:       offspace.Photo,

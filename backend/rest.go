@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
+	"strconv"
 )
 
 type OffspaceRest struct {
@@ -15,10 +17,18 @@ type OffspaceRest struct {
 	Bio         string
 	Street      string
 	Postcode    string
-	City        string
+	City        TagRest
 	Website     string
 	SocialMedia string
 	Photo       string
+	Tags        []TagRest
+}
+
+type TagRest struct {
+	Id        int64
+	Name      string
+	IsCity    bool
+	Published bool
 }
 
 func (o OffspaceRest) String() string {
@@ -28,6 +38,7 @@ func (o OffspaceRest) String() string {
 func startServer() {
 	http.HandleFunc("/", getRoot)
 	http.HandleFunc("/publish/", getPublish)
+	http.HandleFunc("/tags/", getTagsRest)
 	http.HandleFunc("/create/", postOffspace)
 	http.HandleFunc("/update/", putOffspace)
 	err2 := http.ListenAndServe(":3333", nil)
@@ -39,11 +50,31 @@ func startServer() {
 	}
 }
 
+func getTagsRest(w http.ResponseWriter, r *http.Request) {
+	enableCORS(w)
+	fmt.Printf("got / tags get request\n")
+	var tags []TagRest
+	tags, err := getTags(true)
+	if err != nil {
+		fmt.Errorf("read error: %v", err)
+		io.WriteString(w, fmt.Sprintf("read error: %s", err))
+		return
+	}
+	response, err := json.Marshal(tags)
+	if err != nil {
+		fmt.Errorf("read error: %v", err)
+		io.WriteString(w, fmt.Sprintf("read error: %s", err))
+		return
+	}
+	io.WriteString(w, string(response))
+}
+
 func getRoot(w http.ResponseWriter, r *http.Request) {
 	enableCORS(w)
 	fmt.Printf("got / get request\n")
 	var offspaces []OffspaceRest
-	offspaces, err := getOffspaces(true)
+	body, _ := url.ParseQuery(r.URL.RawQuery)
+	offspaces, err := getOffspaces(true, stringsToInts(body["tags"]))
 	if err != nil {
 		fmt.Errorf("read error: %v", err)
 		io.WriteString(w, fmt.Sprintf("read error: %s", err))
@@ -63,7 +94,7 @@ func getPublish(w http.ResponseWriter, r *http.Request) {
 	enableCORS(w)
 	fmt.Printf("got /publish get request\n")
 	var offspaces []OffspaceRest
-	offspaces, err := getOffspaces(false)
+	offspaces, err := getOffspaces(false, []int{}) // no tag filtering
 	if err != nil {
 		fmt.Errorf("read error: %v", err)
 		io.WriteString(w, fmt.Sprintf("read error: %s", err))
@@ -116,4 +147,16 @@ func enableCORS(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:63342")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+}
+
+func stringsToInts(strings []string) []int {
+	ints := make([]int, len(strings))
+	for _, s := range strings {
+		if num, err := strconv.Atoi(s); err == nil {
+			ints = append(ints, num)
+		} else {
+			return ints
+		}
+	}
+	return ints
 }

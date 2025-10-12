@@ -3,9 +3,11 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"github.com/google/uuid"
 	"log"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 )
 
 type Offspace struct {
@@ -24,9 +26,10 @@ type Offspace struct {
 }
 
 type Tag struct {
-	Id     int64
-	Name   string
-	IsCity bool
+	Id        int64
+	Name      string
+	IsCity    bool
+	Published bool
 }
 
 func (o Offspace) String() string {
@@ -35,13 +38,13 @@ func (o Offspace) String() string {
 
 // DB implement namespace
 type DB struct {
-	Db *sql.DB
+	Db *sqlx.DB
 }
 
 var dbAdapter DB
 
 func connectDb(username *string, password *string) {
-	newDb, err := sql.Open("mysql", fmt.Sprintf("%s:%s@/offspaces", *username, *password))
+	newDb, err := sqlx.Open("mysql", fmt.Sprintf("%s:%s@/offspaces", *username, *password))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -57,27 +60,61 @@ func connectDb(username *string, password *string) {
 	dbAdapter.Db = newDb
 }
 
-func (DB) queryOffspaces(checkPublished bool) ([]Offspace, error) {
+func (DB) queryOffspaces(checkPublished bool, tags []int) ([]Offspace, error) {
 	var offspaces []Offspace
-	var rows *sql.Rows
+	var query string
+	var args []any
 	var err error
-	if checkPublished {
-		rows, err = dbAdapter.Db.Query("SELECT * FROM offspace WHERE published=false")
+	if tags == nil || len(tags) < 1 {
+		// No tag filtering
+		query = `
+            SELECT *
+            FROM offspace
+            WHERE (? = FALSE OR published = TRUE)`
+		args = []any{checkPublished}
 	} else {
-		rows, err = dbAdapter.Db.Query("SELECT * FROM offspace")
+		// Query with tag filtering
+		query, args, err = sqlx.In(`
+            SELECT DISTINCT o.*
+            FROM offspace o
+            LEFT JOIN offspace_tag ot ON o.id = ot.offspace
+            WHERE (? = FALSE OR o.published = TRUE)
+              AND (o.city IN (?) OR ot.tag IN (?))`,
+			checkPublished, tags, tags,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("offspace: %v", err)
+		}
+		query = dbAdapter.Db.Rebind(query)
 	}
+	err = dbAdapter.Db.Select(&offspaces, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("offspace: %v", err)
 	}
+	return offspaces, nil
+}
+
+func (DB) queryTags(checkPublished bool) ([]Tag, error) {
+	var tags []Tag
+	var rows *sql.Rows
+	var err error
+	if checkPublished {
+		rows, err = dbAdapter.Db.Query("SELECT * FROM tag WHERE published=false")
+	} else {
+		rows, err = dbAdapter.Db.Query("SELECT * FROM tag")
+	}
+	if err != nil {
+		return nil, fmt.Errorf("taq: %v", err)
+	}
 	defer rows.Close()
 	for rows.Next() {
-		var off Offspace
-		if err := rows.Scan(&off.Id, &off.Name, &off.Name, &off.Street, &off.Postcode, &off.City, &off.Website, &off.SocialMedia, &off.Photo, &off.Published, &off.EditKey); err != nil {
+		var tag Tag
+		if err := rows.Scan(&tag.Id, &tag.Name, &tag.Name); err != nil {
 			return nil, fmt.Errorf("offspace: %v", err)
 		}
-		offspaces = append(offspaces, off)
+		tags = append(tags, tag)
 	}
-	return offspaces, nil
+	return tags, nil
 }
 
 func (DB) createOffspace(o OffspaceRest) error {

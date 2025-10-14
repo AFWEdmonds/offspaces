@@ -3,34 +3,27 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"github.com/google/uuid"
 	"log"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Offspace struct {
 	Id          int64
 	Name        string
-	Bio         string
 	Street      string
 	Postcode    string
-	City        Tag
+	City        string
 	Website     string
 	SocialMedia string
 	Photo       string
 	Published   bool
 	EditKey     string
-	Tags        []Tag
-}
-
-type Tag struct {
-	Id     int64
-	Name   string
-	IsCity bool
 }
 
 func (o Offspace) String() string {
-	return fmt.Sprintf("%d, %s, %s, %s, %s, %s, %s, %s, %d, %s", o.Id, o.Name, o.Bio, o.Street, o.Postcode, o.City, o.Website, o.SocialMedia, o.Photo, o.Published, o.EditKey)
+	return fmt.Sprintf("%d, %s, %s, %s, %s, %s, %s, %s, %d, %s", o.Id, o.Name, o.Street, o.Postcode, o.City, o.Website, o.SocialMedia, o.Photo, o.Published, o.EditKey)
 }
 
 // DB implement namespace
@@ -82,7 +75,7 @@ func (DB) queryOffspaces(checkPublished bool) ([]Offspace, error) {
 
 func (DB) createOffspace(o OffspaceRest) error {
 	editUuid, err := uuid.NewRandom()
-	rows, err := dbAdapter.Db.Exec("INSERT INTO offspace (name, bio, street, postcode, city, website, social_media, photo, published, edit_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	rows, err := dbAdapter.Db.Exec("INSERT INTO offspace (name, street, postcode, city, website, social_media, photo, published, edit_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
 		o.Name, o.Bio, o.Street, o.Postcode, o.City, o.Website, o.SocialMedia, o.Photo, false, editUuid)
 	if err != nil {
 		return err
@@ -97,8 +90,8 @@ func (DB) updateOffspace(o Offspace, admin bool) error {
 	if !admin {
 		o.Published = false
 	}
-	rows, err := dbAdapter.Db.Exec("UPDATE offspace SET name = ?, bio = ?, street = ?, postcode = ?, city = ?, website = ?, social_media = ?, photo = ?, published = ?, edit_key = ? WHERE edit_key = ?",
-		o.Name, o.Bio, o.Street, o.Postcode, o.City, o.Website, o.SocialMedia, o.Photo, o.Published, o.EditKey, o.EditKey)
+	rows, err := dbAdapter.Db.Exec("UPDATE offspace SET name = ?, street = ?, postcode = ?, city = ?, website = ?, social_media = ?, photo = ?, published = ?, edit_key = ? WHERE edit_key = ?",
+		o.Name, o.Street, o.Postcode, o.City, o.Website, o.SocialMedia, o.Photo, o.Published, o.EditKey, o.EditKey)
 	if err != nil {
 		return err
 	}

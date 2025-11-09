@@ -4,30 +4,76 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Offspaces</title>
-    <script src="index.js"></script>
+    <script src="index.js" defer></script>
     <script src="bootstrap/js/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="bootstrap/css/bootstrap.css"/>
 </head>
-<body style="background-color: lightgray">
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-12" style="background-color: white; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px">
-                <hr/>
-                <h1>Offspaces</h1>
-                <p>This is a list of offspaces in Frankfurt and Offenbach am Main</p>
-                <p>If you are responsible for an offspace you can add it to this list <a href="submit.html">here</a></p>
-                <hr/>
-            </div>
-        </div>
-    </div>
-    <div class="container">
-        <div class="row" style="background-color: lightgray">
-            <div class="offset-md-1 col-md-10">
-                <div id="content">
+    <body style="background-color: lightgray">
+        <div class="container-fluid">
+            <div class="row vh-100">
+                <div class="col-md-3 offset-1 h-100"
+                     style="background-color: white; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px">
+                    <hr/>
+                    <h1>Offspaces</h1>
+                    <p>This is a list of offspaces in Frankfurt and Offenbach am Main</p>
+                    <p>If you are responsible for an offspace you can add it to this list <a href="submit.html">here</a></p>
+                    <hr/>
+                    <form id="form">
+                        <div class="input-group">
+                        <span class="input-group-text" id="terms">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16"
+                                 height="16" fill="currentColor" class="bi bi-search"
+                                 viewBox="0 0 16 16">
+                              <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+                            </svg>
+                        </span>
+                            <input name="text" type="text" class="form-control" placeholder="Search">
+                        </div>
+                        <div class="input-group justify-content-around pt-2">
+                            <p>Search in:</p>
+                            <div class="form-check">
+                                <input name="searchName" class="form-check-input" type="checkbox" value="true" id="searchName">
+                                <label class="form-check-label" for="searchName">
+                                    offspace name
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input name="searchAddress" class="form-check-input" type="checkbox" value="true" id="searchAddress"
+                                       checked>
+                                <label class="form-check-label" for="searchAddress">
+                                    location
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input name="showName" class="form-check-input" type="checkbox" value="true" id="showName" checked>
+                                <label class="form-check-label" for="showName">
+                                    show name
+                                </label>
+                            </div>
+                        </div>
+                        <div class="input-group justify-content-around">
+                            <div class="form-check">
+                                <input name="requireOpenNow" class="form-check-input" type="checkbox" value="false"
+                                       id="requireOpenNow">
+                                <label class="form-check-label" for="requireOpenNow">
+                                    require open now
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input name="requireShowOn" class="form-check-input" type="checkbox" value="false" id="requireShowOn"
+                                       checked>
+                                <label class="form-check-label" for="requireShowOn">
+                                    require active show
+                                </label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-md-7 h-100 overflow-auto">
+                    <div id="content">
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</body>
-
+    </body>
 </html>

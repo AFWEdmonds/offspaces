@@ -2,7 +2,7 @@ const content = document.getElementById("#content");
 
 async function onInit() {
     try {
-        const response = await fetch("http://localhost:3333/", {
+        const response = await fetch("http://localhost:3333/?" + formToQuery('form'), {
             method: "GET",
         });
         const data = await response.json();
@@ -10,6 +10,12 @@ async function onInit() {
     } catch (e) {
         console.error(e);
     }
+}
+
+function formToQuery(formName) {
+    const form = document.getElementById(formName);
+    const formData = new FormData(form);
+    return new URLSearchParams(formData).toString();
 }
 
 function render(data) {

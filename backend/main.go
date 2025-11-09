@@ -5,11 +5,12 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
 	"image"
 	"image/jpeg"
 	"regexp"
 	"strings"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 var maxFileSize = 1 * 1024 * 1024 // 1MB
@@ -53,7 +54,7 @@ func deleteOffspace() {
 	//todo
 }
 
-func getOffspaces(checkPublished bool) ([]OffspaceRest, error) {
+func getOffspaces(checkPublished bool, params query) ([]OffspaceRest, error) {
 	offspaces, err := dbAdapter.queryOffspaces(checkPublished)
 	return mapOffspaceToRestArray(offspaces), err
 }
@@ -70,7 +71,6 @@ func mapOffspaceToRest(offspace Offspace) OffspaceRest {
 	return OffspaceRest{
 		Id:          offspace.Id,
 		Name:        offspace.Name,
-		Bio:         offspace.Bio,
 		Street:      offspace.Street,
 		Postcode:    offspace.Postcode,
 		City:        offspace.City,

@@ -65,7 +65,7 @@ func (DB) queryOffspaces(checkPublished bool) ([]Offspace, error) {
 	defer rows.Close()
 	for rows.Next() {
 		var off Offspace
-		if err := rows.Scan(&off.Id, &off.Name, &off.Name, &off.Street, &off.Postcode, &off.City, &off.Website, &off.SocialMedia, &off.Photo, &off.Published, &off.EditKey); err != nil {
+		if err := rows.Scan(&off.Id, &off.Name, &off.Street, &off.Postcode, &off.City, &off.Website, &off.SocialMedia, &off.Photo, &off.Published, &off.EditKey); err != nil {
 			return nil, fmt.Errorf("offspace: %v", err)
 		}
 		offspaces = append(offspaces, off)
@@ -76,7 +76,7 @@ func (DB) queryOffspaces(checkPublished bool) ([]Offspace, error) {
 func (DB) createOffspace(o OffspaceRest) error {
 	editUuid, err := uuid.NewRandom()
 	rows, err := dbAdapter.Db.Exec("INSERT INTO offspace (name, street, postcode, city, website, social_media, photo, published, edit_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		o.Name, o.Bio, o.Street, o.Postcode, o.City, o.Website, o.SocialMedia, o.Photo, false, editUuid)
+		o.Name, o.Street, o.Postcode, o.City, o.Website, o.SocialMedia, o.Photo, false, editUuid)
 	if err != nil {
 		return err
 	}

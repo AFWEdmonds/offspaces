@@ -6,7 +6,11 @@ async function onInit() {
             method: "GET",
         });
         const data = await response.json();
-        render(data);
+        const frag = document.createDocumentFragment();
+        data.forEach(function (v, i) {
+            renderCard(frag, v);
+        })
+        document.getElementById("content").appendChild(frag);
     } catch (e) {
         console.error(e);
     }
@@ -18,15 +22,14 @@ function formToQuery(formName) {
     return new URLSearchParams(formData).toString();
 }
 
-function render(data) {
-    const frag = document.createDocumentFragment();
 
-    data.forEach(function (v, i) {
+
+function renderCard(frag, v, admin) {
         const card = document.createElement('div');
         card.className = 'card my-4';
 
         const img = document.createElement('img');
-        img.className = 'card-img-top';
+        img.className = 'card-img-top max-vh-50';
         img.alt = 'The offspace';
         img.src = v.Photo;
         card.appendChild(img);
@@ -58,9 +61,6 @@ function render(data) {
 
         card.appendChild(cardBody);
         frag.appendChild(card);
-    });
-
-    document.getElementById("content").appendChild(frag);
 }
 
 onInit();

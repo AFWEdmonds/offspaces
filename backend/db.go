@@ -2,24 +2,50 @@ package main
 
 import (
 	"database/sql"
+	"database/sql/driver"
+	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 )
 
+type OpeningHours struct {
+	Mon [24]bool
+	Tue [24]bool
+	Wed [24]bool
+	Thu [24]bool
+	Fri [24]bool
+	Sat [24]bool
+	Sun [24]bool
+}
+
 type Offspace struct {
-	Id          int64
-	Name        string
-	Street      string
-	Postcode    string
-	City        string
-	Website     string
-	SocialMedia string
-	Photo       string
-	Published   bool
-	EditKey     string
+	Id           int
+	Name         string
+	Street       string
+	Postcode     string
+	City         string
+	Website      string
+	SocialMedia  string
+	Photo        string
+	Published    bool
+	EditKey      string
+	OpeningHours OpeningHours
+}
+
+type Query struct {
+	Text           string
+	Index          int
+	DisplayAmount  int
+	RequireOpenNow bool
+	RequireShowOn  bool
+	SearchName     bool
+	SearchAddress  bool
+	SearchShow     bool
+	SortBy         string
 }
 
 func (o Offspace) String() string {
@@ -50,27 +76,159 @@ func connectDb(username *string, password *string) {
 	dbAdapter.Db = newDb
 }
 
-func (DB) queryOffspaces(checkPublished bool) ([]Offspace, error) {
-	var offspaces []Offspace
-	var rows *sql.Rows
-	var err error
-	if checkPublished {
-		rows, err = dbAdapter.Db.Query("SELECT * FROM offspace WHERE published=false")
-	} else {
-		rows, err = dbAdapter.Db.Query("SELECT * FROM offspace")
+func (DB) queryOffspaces(showUnpublished bool, q Query) ([]Offspace, error) {
+	base := `SELECT 
+                id, name, street, postcode, city,
+                website, social_media, photo, published,
+                edit_key, opening_hours
+             FROM offspace`
+
+	conditions := []string{}
+	args := []interface{}{}
+
+	if !showUnpublished {
+		conditions = append(conditions, "published = TRUE")
 	}
+
+	if q.Text != "" {
+		like := "%" + q.Text + "%"
+
+		var searchParts []string
+
+		if q.SearchName {
+			searchParts = append(searchParts, "name LIKE ?")
+			args = append(args, like)
+		}
+
+		if q.SearchAddress {
+			searchParts = append(searchParts, "(street LIKE ? OR city LIKE ? OR postcode LIKE ?)")
+			args = append(args, like, like, like)
+		}
+
+		if q.SearchShow {
+			// placeholder until "show" exists
+			searchParts = append(searchParts, "0 = 1") // always false for now
+		}
+
+		// default → name search
+		if len(searchParts) == 0 {
+			searchParts = append(searchParts, "name LIKE ?")
+			args = append(args, like)
+		}
+
+		conditions = append(conditions, "("+strings.Join(searchParts, " OR ")+")")
+	}
+
+	// -------------------------------------------------------
+	// 3. requireShowOn
+	// -------------------------------------------------------
+	if q.RequireShowOn {
+		// placeholder until "show" exists
+		conditions = append(conditions, "social_media <> ''")
+	}
+
+	// -------------------------------------------------------
+	// 4. Open-now filtering
+	// -------------------------------------------------------
+	if q.RequireOpenNow {
+		now := time.Now()
+		weekday := strings.ToLower(now.Weekday().String()[:3]) // mon/tue/wed...
+		hour := now.Hour()
+
+		conditions = append(conditions,
+			fmt.Sprintf("JSON_EXTRACT(opening_hours, '$.%s[%d]') = true", weekday, hour),
+		)
+	}
+
+	// -------------------------------------------------------
+	// WHERE clause
+	// -------------------------------------------------------
+	sqlQuery := base
+	if len(conditions) > 0 {
+		sqlQuery += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	// -------------------------------------------------------
+	// Sorting
+	// -------------------------------------------------------
+	switch q.SortBy {
+	case "name":
+		sqlQuery += " ORDER BY name ASC"
+	case "city":
+		sqlQuery += " ORDER BY city ASC"
+	case "newest":
+		sqlQuery += " ORDER BY id DESC"
+	default:
+		sqlQuery += " ORDER BY id ASC"
+	}
+
+	// -------------------------------------------------------
+	// Pagination
+	// -------------------------------------------------------
+	if q.DisplayAmount <= 0 {
+		q.DisplayAmount = 50
+	}
+	offset := q.Index * q.DisplayAmount
+
+	sqlQuery += " LIMIT ? OFFSET ?"
+	args = append(args, q.DisplayAmount, offset)
+
+	// -------------------------------------------------------
+	// Execute
+	// -------------------------------------------------------
+	rows, err := dbAdapter.Db.Query(sqlQuery, args...)
 	if err != nil {
-		return nil, fmt.Errorf("offspace: %v", err)
+		return nil, fmt.Errorf("queryOffspaces: %v", err)
 	}
 	defer rows.Close()
+
+	var result []Offspace
+
 	for rows.Next() {
 		var off Offspace
-		if err := rows.Scan(&off.Id, &off.Name, &off.Street, &off.Postcode, &off.City, &off.Website, &off.SocialMedia, &off.Photo, &off.Published, &off.EditKey); err != nil {
-			return nil, fmt.Errorf("offspace: %v", err)
+		var openingJSON []byte
+
+		err := rows.Scan(
+			&off.Id,
+			&off.Name,
+			&off.Street,
+			&off.Postcode,
+			&off.City,
+			&off.Website,
+			&off.SocialMedia,
+			&off.Photo,
+			&off.Published,
+			&off.EditKey,
+			&openingJSON,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("scan: %v", err)
 		}
-		offspaces = append(offspaces, off)
+
+		if len(openingJSON) > 0 {
+			if err := json.Unmarshal(openingJSON, &off.OpeningHours); err != nil {
+				return nil, fmt.Errorf("opening_hours JSON: %v", err)
+			}
+		}
+
+		result = append(result, off)
 	}
-	return offspaces, nil
+
+	return result, nil
+}
+
+func (DB) getOffspaceByKey(key string) (Offspace, error) {
+	var off Offspace
+	rows, err := dbAdapter.Db.Query("SELECT * FROM offspace WHERE edit_key=?", key)
+	if err != nil {
+		return Offspace{}, fmt.Errorf("offspace: %v", err)
+	}
+	defer rows.Close()
+	rows.Next()
+	if err := rows.Scan(&off.Id, &off.Name, &off.Street, &off.Postcode, &off.City, &off.Website, &off.SocialMedia, &off.Photo, &off.Published, &off.EditKey); err != nil {
+		return Offspace{}, fmt.Errorf("offspace: %v", err)
+	}
+	return off, nil
 }
 
 func (DB) createOffspace(o OffspaceRest) error {
@@ -81,7 +239,7 @@ func (DB) createOffspace(o OffspaceRest) error {
 		return err
 	}
 	lastInsertId, err := rows.LastInsertId()
-	fmt.Println(fmt.Sprintf("Added row with id: %d, and contents %d %s %s %s %s %s %s %s", lastInsertId, o.Id, o.Name, o.Bio, o.Street, o.City, o.Postcode, o.Website, o.SocialMedia))
+	fmt.Println(fmt.Sprintf("Added row with id: %d, and contents %d %s %s %s %s %s %s %s", lastInsertId, o.ID, o.Name, o.Street, o.City, o.Postcode, o.Website, o.SocialMedia))
 	return err
 }
 
@@ -98,4 +256,21 @@ func (DB) updateOffspace(o Offspace, admin bool) error {
 	lastInsertId, err := rows.LastInsertId()
 	fmt.Println(fmt.Sprintf("Added row with id: %d, and contents %s", lastInsertId, o.String()))
 	return err
+}
+
+func (o OpeningHours) Value() (driver.Value, error) {
+	return json.Marshal(o) // returns []byte containing JSON
+}
+
+func (o *OpeningHours) Scan(src any) error {
+	if src == nil {
+		return nil
+	}
+
+	b, ok := src.([]byte)
+	if !ok {
+		return fmt.Errorf("OpeningHours.Scan: expected []byte, got %T", src)
+	}
+
+	return json.Unmarshal(b, o)
 }

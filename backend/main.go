@@ -54,9 +54,20 @@ func deleteOffspace() {
 	//todo
 }
 
-func getOffspaces(checkPublished bool, params query) ([]OffspaceRest, error) {
-	offspaces, err := dbAdapter.queryOffspaces(checkPublished)
+func getOffspaces(params QueryRest) ([]OffspaceRest, error) {
+	var err error
+	var offspaces []Offspace
+	if params.AdminKey == *adminPassword {
+		offspaces, err = dbAdapter.queryOffspaces(true, mapQueryRestToQuery(params))
+	} else {
+		offspaces, err = dbAdapter.queryOffspaces(false, mapQueryRestToQuery(params))
+	}
 	return mapOffspaceToRestArray(offspaces), err
+}
+
+func getOffspaceByKey(key string) (OffspaceRest, error) {
+	offspace, err := dbAdapter.getOffspaceByKey(key)
+	return mapOffspaceToRest(offspace), err
 }
 
 func mapOffspaceToRestArray(offspace []Offspace) []OffspaceRest {
@@ -69,7 +80,7 @@ func mapOffspaceToRestArray(offspace []Offspace) []OffspaceRest {
 
 func mapOffspaceToRest(offspace Offspace) OffspaceRest {
 	return OffspaceRest{
-		Id:          offspace.Id,
+		ID:          offspace.Id,
 		Name:        offspace.Name,
 		Street:      offspace.Street,
 		Postcode:    offspace.Postcode,
@@ -77,6 +88,20 @@ func mapOffspaceToRest(offspace Offspace) OffspaceRest {
 		Website:     offspace.Website,
 		SocialMedia: offspace.SocialMedia,
 		Photo:       offspace.Photo,
+	}
+}
+
+func mapQueryRestToQuery(query QueryRest) Query {
+	return Query{
+		Text:           query.Text,
+		Index:          query.Index,
+		DisplayAmount:  query.DisplayAmount,
+		RequireOpenNow: query.RequireOpenNow,
+		RequireShowOn:  query.RequireShowOn,
+		SearchName:     query.SearchName,
+		SearchAddress:  query.SearchAddress,
+		SearchShow:     query.SearchShow,
+		SortBy:         query.SortBy,
 	}
 }
 

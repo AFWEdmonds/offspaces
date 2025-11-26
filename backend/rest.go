@@ -13,38 +13,50 @@ import (
 )
 
 type OffspaceRest struct {
-	Id          int64
-	Name        string
-	Bio         string
-	Street      string
-	Postcode    string
-	City        string
-	Website     string
-	SocialMedia string
-	Photo       string
+	ID          int              `json:"id"`
+	Name        string           `json:"name"`
+	Street      string           `json:"street"`
+	Postcode    string           `json:"postcode"`
+	City        string           `json:"city"`
+	Website     string           `json:"website"`
+	SocialMedia string           `json:"social_media"`
+	Photo       string           `json:"photo"` // base64 encoded by default if in JSON
+	Published   bool             `json:"published"`
+	Opening     OpeningHoursRest `json:"opening_hours"`
 }
 
-type query struct {
-	index          int
-	terms          []string
-	displayAmount  int
-	requireOpenNow bool
-	requireShowOn  bool
-	searchName     bool
-	searchAddress  bool
-	searchShow     bool
-	sortBy         string
-	adminKey       string
+type QueryRest struct {
+	Text           string `json:"text"`
+	Index          int    `json:"index"`
+	DisplayAmount  int    `json:"display_amount"`
+	RequireOpenNow bool   `json:"require_open_now"`
+	RequireShowOn  bool   `json:"require_show_on"`
+	SearchName     bool   `json:"search_name"`
+	SearchAddress  bool   `json:"search_address"`
+	SearchShow     bool   `json:"search_show"`
+	SortBy         string `json:"sort_by"`
+	AdminKey       string `json:"admin_key"`
+}
+
+type OpeningHoursRest struct {
+	Mon [24]bool `json:"mon"`
+	Tue [24]bool `json:"tue"`
+	Wed [24]bool `json:"wed"`
+	Thu [24]bool `json:"thu"`
+	Fri [24]bool `json:"fri"`
+	Sat [24]bool `json:"sat"`
+	Sun [24]bool `json:"sun"`
 }
 
 func (o OffspaceRest) String() string {
-	return fmt.Sprintf("%d, %s, %s, %s, %s, %s, %s, %s, %s", o.Id, o.Name, o.Bio, o.Street, o.Postcode, o.City, o.Website, o.SocialMedia, o.Photo)
+	return fmt.Sprintf("%d, %s, %s, %s, %s, %s, %s, %s, %s", o.ID, o.Name, o.Street, o.Postcode, o.City, o.Website, o.SocialMedia, o.Photo)
 }
 
 func startServer() {
 	http.HandleFunc("/", getRoot)
 	http.HandleFunc("/create/", postOffspace)
 	http.HandleFunc("/update/", putOffspace)
+	http.HandleFunc("/get/", getOffspace)
 	err2 := http.ListenAndServe(":3333", nil)
 	if errors.Is(err2, http.ErrServerClosed) {
 		fmt.Printf("server closed\n")
@@ -58,7 +70,7 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 	enableCORS(w)
 	fmt.Printf("got / get request\n")
 	var offspaces []OffspaceRest
-	offspaces, err := getOffspaces(true, queryToStruct(url.ParseQuery(r.URL.RawQuery)))
+	offspaces, err := getOffspaces(queryToStruct(url.ParseQuery(r.URL.RawQuery)))
 	if err != nil {
 		fmt.Errorf("read error: %v", err)
 		io.WriteString(w, fmt.Sprintf("read error: %s", err))
@@ -71,7 +83,25 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	io.WriteString(w, string(response))
+}
 
+func getOffspace(w http.ResponseWriter, r *http.Request) {
+	enableCORS(w)
+	fmt.Printf("got / get request\n")
+	values, err := url.ParseQuery(r.URL.RawQuery)
+	offspace, err := getOffspaceByKey(getString(values, "editKey", ""))
+	if err != nil {
+		fmt.Errorf("read error: %v", err)
+		io.WriteString(w, fmt.Sprintf("read error: %s", err))
+		return
+	}
+	response, err := json.Marshal(offspace)
+	if err != nil {
+		fmt.Errorf("read error: %v", err)
+		io.WriteString(w, fmt.Sprintf("read error: %s", err))
+		return
+	}
+	io.WriteString(w, string(response))
 }
 
 func postOffspace(w http.ResponseWriter, r *http.Request) {
@@ -117,16 +147,17 @@ func enableCORS(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 }
 
-func queryToStruct(values map[string][]string, err error) query {
-	return query{
-		index:          getInt(values, "index", 0),
-		displayAmount:  getInt(values, "displayAmount", 10),
-		requireOpenNow: getBool(values, "requireOpenNow", false),
-		requireShowOn:  getBool(values, "requireShowOn", true),
-		searchAddress:  getBool(values, "searchAddress", false),
-		searchShow:     getBool(values, "searchShow", false),
-		sortBy:         getString(values, "sortBy", "date"),
-		adminKey:       getString(values, "adminKey", ""),
+func queryToStruct(values map[string][]string, err error) QueryRest {
+	return QueryRest{
+		Text:           getString(values, "text", ""),
+		Index:          getInt(values, "index", 0),
+		DisplayAmount:  getInt(values, "displayAmount", 10),
+		RequireOpenNow: getBool(values, "requireOpenNow", false),
+		RequireShowOn:  getBool(values, "requireShowOn", true),
+		SearchAddress:  getBool(values, "searchAddress", false),
+		SearchShow:     getBool(values, "searchShow", false),
+		SortBy:         getString(values, "sortBy", "date"),
+		AdminKey:       getString(values, "adminKey", ""),
 	}
 }
 

@@ -22,7 +22,7 @@ type OffspaceRest struct {
 	SocialMedia string           `json:"social_media"`
 	Photo       string           `json:"photo"` // base64 encoded by default if in JSON
 	Published   bool             `json:"published"`
-	Opening     OpeningHoursRest `json:"opening_hours"`
+	Opening     OpeningTimesRest `json:"opening_times"`
 }
 
 type QueryRest struct {
@@ -38,14 +38,19 @@ type QueryRest struct {
 	AdminKey       string `json:"admin_key"`
 }
 
-type OpeningHoursRest struct {
-	Mon [24]bool `json:"mon"`
-	Tue [24]bool `json:"tue"`
-	Wed [24]bool `json:"wed"`
-	Thu [24]bool `json:"thu"`
-	Fri [24]bool `json:"fri"`
-	Sat [24]bool `json:"sat"`
-	Sun [24]bool `json:"sun"`
+type OpeningDayRest struct {
+	Start string
+	End   string
+}
+
+type OpeningTimesRest struct {
+	Mon OpeningDay
+	Tue OpeningDay
+	Wed OpeningDay
+	Thu OpeningDay
+	Fri OpeningDay
+	Sat OpeningDay
+	Sun OpeningDay
 }
 
 func (o OffspaceRest) String() string {

@@ -12,14 +12,19 @@ import (
 	"github.com/google/uuid"
 )
 
-type OpeningHours struct {
-	Mon [24]bool
-	Tue [24]bool
-	Wed [24]bool
-	Thu [24]bool
-	Fri [24]bool
-	Sat [24]bool
-	Sun [24]bool
+type OpeningDay struct {
+	Start string
+	End   string
+}
+
+type OpeningTimes struct {
+	Mon OpeningDay
+	Tue OpeningDay
+	Wed OpeningDay
+	Thu OpeningDay
+	Fri OpeningDay
+	Sat OpeningDay
+	Sun OpeningDay
 }
 
 type Offspace struct {
@@ -33,7 +38,7 @@ type Offspace struct {
 	Photo        string
 	Published    bool
 	EditKey      string
-	OpeningHours OpeningHours
+	OpeningTimes OpeningTimes
 }
 
 type Query struct {
@@ -77,10 +82,11 @@ func connectDb(username *string, password *string) {
 }
 
 func (DB) queryOffspaces(showUnpublished bool, q Query) ([]Offspace, error) {
+	// language=SQL
 	base := `SELECT 
                 id, name, street, postcode, city,
                 website, social_media, photo, published,
-                edit_key, opening_hours
+                edit_key, opening_times
              FROM offspace`
 
 	conditions := []string{}
@@ -136,7 +142,7 @@ func (DB) queryOffspaces(showUnpublished bool, q Query) ([]Offspace, error) {
 		hour := now.Hour()
 
 		conditions = append(conditions,
-			fmt.Sprintf("JSON_EXTRACT(opening_hours, '$.%s[%d]') = true", weekday, hour),
+			fmt.Sprintf("JSON_EXTRACT(opening_times, '$.%s[%d]') = true", weekday, hour),
 		)
 	}
 
@@ -206,8 +212,8 @@ func (DB) queryOffspaces(showUnpublished bool, q Query) ([]Offspace, error) {
 		}
 
 		if len(openingJSON) > 0 {
-			if err := json.Unmarshal(openingJSON, &off.OpeningHours); err != nil {
-				return nil, fmt.Errorf("opening_hours JSON: %v", err)
+			if err := json.Unmarshal(openingJSON, &off.openingTimes); err != nil {
+				return nil, fmt.Errorf("opening_times JSON: %v", err)
 			}
 		}
 
@@ -258,18 +264,18 @@ func (DB) updateOffspace(o Offspace, admin bool) error {
 	return err
 }
 
-func (o OpeningHours) Value() (driver.Value, error) {
+func (o openingTimes) Value() (driver.Value, error) {
 	return json.Marshal(o) // returns []byte containing JSON
 }
 
-func (o *OpeningHours) Scan(src any) error {
+func (o *openingTimes) Scan(src any) error {
 	if src == nil {
 		return nil
 	}
 
 	b, ok := src.([]byte)
 	if !ok {
-		return fmt.Errorf("OpeningHours.Scan: expected []byte, got %T", src)
+		return fmt.Errorf("openingTimes.Scan: expected []byte, got %T", src)
 	}
 
 	return json.Unmarshal(b, o)

@@ -9,18 +9,20 @@
     <script src="bootstrap/js/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="bootstrap/css/bootstrap.css"/>
 </head>
-    <body style="background-color: lightgray">
-        <div class="container-fluid">
-            <div class="row vh-100">
-                <div class="col-lg-3 col-md-4 offset-lg-1 h-100"
-                     style="background-color: white; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px">
-                    <hr/>
-                    <h1>Offspaces</h1>
-                    <p>This is a list of offspaces in Frankfurt and Offenbach am Main</p>
-                    <p>If you are responsible for an offspace you can add or edit an entry <a data-bs-toggle="modal" data-bs-target="#firstModal">here</a></p>
-                    <hr/>
-                    <form id="form">
-                        <div class="input-group">
+<body style="background-color: lightgray">
+<div class="container-fluid">
+    <div class="row vh-100">
+        <div class="col-lg-3 col-md-4 offset-lg-1 h-100"
+             style="background-color: white; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px">
+            <hr/>
+            <h1>Offspaces</h1>
+            <p>This is a list of offspaces in Frankfurt and Offenbach am Main</p>
+            <p>If you are responsible for an offspace you can add or edit an entry <a data-bs-toggle="modal"
+                                                                                      data-bs-target="#firstModal">here</a>
+            </p>
+            <hr/>
+            <form id="form">
+                <div class="input-group">
                         <span class="input-group-text" id="terms">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16"
                                  height="16" fill="currentColor" class="bi bi-search"
@@ -28,120 +30,247 @@
                               <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
                             </svg>
                         </span>
-                            <input name="text" type="text" class="form-control" placeholder="Search">
-                        </div>
-                        <div class="input-group justify-content-around pt-2">
-                            <p>Search in:</p>
-                            <div class="form-check">
-                                <input name="searchName" class="form-check-input" type="checkbox" value="true" id="searchName">
-                                <label class="form-check-label" for="searchName">
-                                    offspace name
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input name="searchAddress" class="form-check-input" type="checkbox" value="true" id="searchAddress"
-                                       checked>
-                                <label class="form-check-label" for="searchAddress">
-                                    location
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input name="showName" class="form-check-input" type="checkbox" value="true" id="showName" checked>
-                                <label class="form-check-label" for="showName">
-                                    show name
-                                </label>
-                            </div>
-                        </div>
-                        <div class="input-group justify-content-around">
-                            <div class="form-check">
-                                <input name="requireOpenNow" class="form-check-input" type="checkbox" value="false"
-                                       id="requireOpenNow">
-                                <label class="form-check-label" for="requireOpenNow">
-                                    require open now
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input name="requireShowOn" class="form-check-input" type="checkbox" value="false" id="requireShowOn"
-                                       checked>
-                                <label class="form-check-label" for="requireShowOn">
-                                    require active show
-                                </label>
-                            </div>
-                        </div>
-                    </form>
+                    <input name="text" type="text" class="form-control" placeholder="Search">
                 </div>
-                <div class="col-md-8 col-lg-7 h-100 overflow-auto">
-                    <div id="content">
+                <div class="input-group justify-content-around pt-2">
+                    <p>Search in:</p>
+                    <div class="form-check">
+                        <input name="searchName" class="form-check-input" type="checkbox" value="true" id="searchName"
+                               checked>
+                        <label class="form-check-label" for="searchName">
+                            offspace name
+                        </label>
                     </div>
+                    <div class="form-check">
+                        <input name="searchAddress" class="form-check-input" type="checkbox" value="true"
+                               id="searchAddress"
+                               checked>
+                        <label class="form-check-label" for="searchAddress">
+                            location
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input name="exhibitionName" class="form-check-input" type="checkbox" value="true"
+                               id="exhibitionName" checked>
+                        <label class="form-check-label" for="exhibitionName">
+                            exhibition name
+                        </label>
+                    </div>
+                </div>
+                <div class="input-group justify-content-around">
+                    <div class="form-check">
+                        <input name="requireOpenNow" class="form-check-input" type="checkbox" value="false"
+                               id="requireOpenNow">
+                        <label class="form-check-label" for="requireOpenNow">
+                            require open now
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input name="requireShowOn" class="form-check-input" type="checkbox" value="false"
+                               id="requireShowOn">
+                        <label class="form-check-label" for="requireShowOn">
+                            require active show
+                        </label>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="col-md-8 col-lg-7 h-100 overflow-auto">
+            <div id="content">
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="firstModal" tabindex="-1" aria-labelledby="firstModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="firstModelLabel">Publish an offspace</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <label for="editKey">To edit an existing entry, paste your edit code here:</label>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" name="editCode" id="editKey"/>
+                    <button type="button" class="btn btn-primary" onclick="getOffspace()">Submit</button>
+                </div>
+                <label for="edit">To publish a new entry, click here:</label>
+                <button name="edit" id="edit" type="button" class="btn btn-success" onclick="newOffspace()">New</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="editModalLabel">Publish an offspace</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Submissions will be reviewed before publishing.</p>
+                <p>Once you submit your offspace, you will receive an edit code. Keep this code safe - you can use it to
+                    edit the entry.
+                    Edited entries will be reviewed again.</p>
+                <hr/>
+                <form id="offspace">
+                    <img id="preview" class="img-fluid" src="preview.svg" alt="preview">
+                    <p>
+                        <label for="Photo">Upload a representative picture of your offspace (max 1Mb):</label>
+                        <input accept="image/*" type="file" id="photo" name="photo" required/>
+                    </p>
+                    <p>
+                        <label for="Name">Name:</label>
+                        <input type="text" id="Name" name="name" value="" required/>
+                    </p>
+                    <p>
+                        <label for="Street">Street name and house number:</label>
+                        <input type="text" id="Street" name="street" value="" required/>
+                    </p>
+                    <p>
+                        <label for="Postcode">Postcode:</label>
+                        <input type="text" id="Postcode" name="postcode" value="" required/>
+                    </p>
+                    <p>
+                        <label for="City">City:</label>
+                        <input type="text" id="City" name="city" value="" required/>
+                    </p>
+                    <p>
+                        <label for="Website">Website:</label>
+                        <input type="text" id="Website" name="website" value="" required/>
+                    </p>
+                    <p>
+                        <label for="SocialMedia">Social media:</label>
+                        <input type="text" id="SocialMedia" name="socialMedia" value="" required/>
+                    </p>
+
+                    <div class="row g-2 align-items-center mb-2">
+                        <div class="col-3 ">Monday</div>
+                        <div class="col-auto">
+                            <input class="form-check-input closed-check" type="checkbox" name="mon_closed">
+                            <label class="form-check-label">Closed</label>
+                        </div>
+                        <div class="col">
+                            <select class="form-select time-start" name="mon_start"></select>
+                        </div>
+                        <div class="col">
+                            <select class="form-select time-end" name="mon_end"></select>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 align-items-center mb-2">
+                        <div class="col-3 ">Tuesday</div>
+                        <div class="col-auto">
+                            <input class="form-check-input closed-check" type="checkbox" name="tue_closed">
+                            <label class="form-check-label">Closed</label>
+                        </div>
+                        <div class="col">
+                            <select class="form-select time-start" name="tue_start"></select>
+                        </div>
+                        <div class="col">
+                            <select class="form-select time-end" name="tue_end"></select>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 align-items-center mb-2">
+                        <div class="col-3 ">Wednesday</div>
+                        <div class="col-auto">
+                            <input class="form-check-input closed-check" type="checkbox" name="wed_closed">
+                            <label class="form-check-label">Closed</label>
+                        </div>
+                        <div class="col">
+                            <select class="form-select time-start" name="wed_start"></select>
+                        </div>
+                        <div class="col">
+                            <select class="form-select time-end" name="wed_end"></select>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 align-items-center mb-2">
+                        <div class="col-3 ">Thursday</div>
+                        <div class="col-auto">
+                            <input class="form-check-input closed-check" type="checkbox" name="thu_closed">
+                            <label class="form-check-label">Closed</label>
+                        </div>
+                        <div class="col">
+                            <select class="form-select time-start" name="thu_start"></select>
+                        </div>
+                        <div class="col">
+                            <select class="form-select time-end" name="thu_end"></select>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 align-items-center mb-2">
+                        <div class="col-3 ">Friday</div>
+                        <div class="col-auto">
+                            <input class="form-check-input closed-check" type="checkbox" name="fri_closed">
+                            <label class="form-check-label">Closed</label>
+                        </div>
+                        <div class="col">
+                            <select class="form-select time-start" name="fri_start"></select>
+                        </div>
+                        <div class="col">
+                            <select class="form-select time-end" name="fri_end"></select>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 align-items-center mb-2">
+                        <div class="col-3 ">Saturday</div>
+                        <div class="col-auto">
+                            <input class="form-check-input closed-check" type="checkbox" name="sat_closed">
+                            <label class="form-check-label">Closed</label>
+                        </div>
+                        <div class="col">
+                            <select class="form-select time-start" name="sat_start"></select>
+                        </div>
+                        <div class="col">
+                            <select class="form-select time-end" name="sat_end"></select>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 align-items-center mb-2">
+                        <div class="col-3 ">Sunday</div>
+                        <div class="col-auto">
+                            <input class="form-check-input closed-check" type="checkbox" name="sun_closed">
+                            <label class="form-check-label">Closed</label>
+                        </div>
+                        <div class="col">
+                            <select class="form-select time-start" name="sun_start"></select>
+                        </div>
+                        <div class="col">
+                            <select class="form-select time-end" name="sun_end"></select>
+                        </div>
+                    </div>
+                    <input type="submit" value="Submit" id="submitButton"/>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="messageModalLabel">Offspace submission</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Your offspace has been submitted for review.</p>
+                <p>Please keep the following edit code safe, you will need it to edit your listing.</p>
+                <label for="editcodeoutput">Your edit code:</label>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input
+                            type="text"
+                            id="editcodeoutput"
+                            value=""
+                            readonly
+                            style="padding: 4px 8px; width: 120px; text-align: center; font-family: monospace;"
+                    >
+                    <button type="button" id="copyBtn" class="btn">Copy</button>
                 </div>
             </div>
         </div>
-        <div class="modal fade" id="firstModal" tabindex="-1" aria-labelledby="firstModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h1 class="modal-title fs-5" id="firstModelLabel">Publish an offspace</h1>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <label for="editKey">To edit an existing entry, paste your edit code here:</label>
-                        <div class="input-group mb-3">
-                            <input type="text" class="form-control" name="editCode" id="editKey"/>
-                            <button type="button" class="btn btn-primary" onclick="getOffspace()">Submit</button>
-                        </div>
-                        <label for="edit">To publish a new entry, click here:</label>
-                        <button name="edit" id="edit" type="button" class="btn btn-success" onclick="newOffspace()">New</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h1 class="modal-title fs-5" id="editModalLabel">Publish an offspace</h1>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>Submissions will be reviewed before publishing.</p>
-                        <p>Once you submit your offspace, you will receive an edit code. Keep this code safe - you can use it to edit the entry.
-                            Edited entries will be reviewed again.</p>
-                        <hr/>
-                        <form id="offspace">
-                            <img id="preview" class="img-fluid" src="preview.svg" alt="preview">
-                            <p>
-                                <label for="Photo">Upload a representative picture of your offspace (max 1Mb):</label>
-                                <input accept="image/*" type="file" id="Photo" name="Photo" required/>
-                            </p>
-                            <p>
-                                <label for="Name">Name:</label>
-                                <input type="text" id="Name" name="Name" value=""/>
-                            </p>
-                            <p>
-                                <label for="Street">Street name and house number:</label>
-                                <input type="text" id="Street" name="Street" value=""/>
-                            </p>
-                            <p>
-                                <label for="Postcode">Postcode:</label>
-                                <input type="text" id="Postcode" name="Postcode" value=""/>
-                            </p>
-                            <p>
-                                <label for="City">City:</label>
-                                <input type="text" id="City" name="City" value=""/>
-                            </p>
-                            <p>
-                                <label for="Website">Website:</label>
-                                <input type="text" id="Website" name="Website" value=""/>
-                            </p>
-                            <p>
-                                <label for="SocialMedia">Social media:</label>
-                                <input type="text" id="SocialMedia" name="SocialMedia" value=""/>
-                            </p>
-                            <input type="submit" value="Submit" id="submitButton"/>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </body>
+    </div>
+</div>
+</body>
 </html>

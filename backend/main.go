@@ -25,23 +25,23 @@ func main() {
 	startServer()
 }
 
-func createOffspace(offspace OffspaceRest) error {
+func createOffspace(offspace OffspaceRest) (string, error) {
 	imgBytes, err := decodeBase64Image(offspace.Photo)
 	if err != nil || len(imgBytes) > maxFileSize || len(imgBytes) == 0 || !isJPEG(imgBytes) {
 	}
 	if len(imgBytes) > maxFileSize {
-		return errors.New("image exceeds size limit")
+		return "", errors.New("image exceeds size limit")
 	}
 
 	if !isJPEG(imgBytes) {
-		return errors.New("image is not valid JPEG")
+		return "", errors.New("image is not valid JPEG")
 
 	}
 
 	// Optional: Try decoding to ensure it's a valid JPEG image
 	_, err = jpeg.Decode(strings.NewReader(string(imgBytes)))
 	if err != nil {
-		return errors.New("invalid JPEG image")
+		return "", errors.New("invalid JPEG image")
 	}
 	return dbAdapter.createOffspace(offspace)
 }
@@ -88,6 +88,7 @@ func mapOffspaceToRest(offspace Offspace) OffspaceRest {
 		Website:     offspace.Website,
 		SocialMedia: offspace.SocialMedia,
 		Photo:       offspace.Photo,
+		Opening:     offspace.OpeningTimes,
 	}
 }
 
@@ -97,10 +98,10 @@ func mapQueryRestToQuery(query QueryRest) Query {
 		Index:          query.Index,
 		DisplayAmount:  query.DisplayAmount,
 		RequireOpenNow: query.RequireOpenNow,
-		RequireShowOn:  query.RequireShowOn,
+		RequireExhibOn: query.RequireExhibOn,
 		SearchName:     query.SearchName,
 		SearchAddress:  query.SearchAddress,
-		SearchShow:     query.SearchShow,
+		SearchExhib:    query.SearchExhib,
 		SortBy:         query.SortBy,
 	}
 }

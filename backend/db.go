@@ -46,10 +46,10 @@ type Query struct {
 	Index          int
 	DisplayAmount  int
 	RequireOpenNow bool
-	RequireShowOn  bool
+	RequireExhibOn bool
 	SearchName     bool
 	SearchAddress  bool
-	SearchShow     bool
+	SearchExhib    bool
 	SortBy         string
 }
 
@@ -93,7 +93,7 @@ func (DB) queryOffspaces(showUnpublished bool, q Query) ([]Offspace, error) {
 	args := []interface{}{}
 
 	if !showUnpublished {
-		conditions = append(conditions, "published = TRUE")
+		conditions = append(conditions, "published = 1")
 	}
 
 	if q.Text != "" {
@@ -111,7 +111,7 @@ func (DB) queryOffspaces(showUnpublished bool, q Query) ([]Offspace, error) {
 			args = append(args, like, like, like)
 		}
 
-		if q.SearchShow {
+		if q.SearchExhib {
 			// placeholder until "show" exists
 			searchParts = append(searchParts, "0 = 1") // always false for now
 		}
@@ -125,38 +125,33 @@ func (DB) queryOffspaces(showUnpublished bool, q Query) ([]Offspace, error) {
 		conditions = append(conditions, "("+strings.Join(searchParts, " OR ")+")")
 	}
 
-	// -------------------------------------------------------
-	// 3. requireShowOn
-	// -------------------------------------------------------
-	if q.RequireShowOn {
+	if q.RequireExhibOn {
 		// placeholder until "show" exists
 		conditions = append(conditions, "social_media <> ''")
 	}
 
-	// -------------------------------------------------------
-	// 4. Open-now filtering
-	// -------------------------------------------------------
 	if q.RequireOpenNow {
 		now := time.Now()
-		weekday := strings.ToLower(now.Weekday().String()[:3]) // mon/tue/wed...
-		hour := now.Hour()
+		wd := now.Weekday().String()[:3] // Mon, Tue, Wed...
+
+		nowStr := now.Format("15:04") // HH:MM
 
 		conditions = append(conditions,
-			fmt.Sprintf("JSON_EXTRACT(opening_times, '$.%s[%d]') = true", weekday, hour),
+			fmt.Sprintf(
+				"JSON_UNQUOTE(JSON_EXTRACT(opening_times, '$.%s.Start')) <= ? AND "+
+					"JSON_UNQUOTE(JSON_EXTRACT(opening_times, '$.%s.End')) >= ?",
+				wd, wd,
+			),
 		)
+
+		args = append(args, nowStr, nowStr)
 	}
 
-	// -------------------------------------------------------
-	// WHERE clause
-	// -------------------------------------------------------
 	sqlQuery := base
 	if len(conditions) > 0 {
 		sqlQuery += " WHERE " + strings.Join(conditions, " AND ")
 	}
 
-	// -------------------------------------------------------
-	// Sorting
-	// -------------------------------------------------------
 	switch q.SortBy {
 	case "name":
 		sqlQuery += " ORDER BY name ASC"
@@ -168,9 +163,6 @@ func (DB) queryOffspaces(showUnpublished bool, q Query) ([]Offspace, error) {
 		sqlQuery += " ORDER BY id ASC"
 	}
 
-	// -------------------------------------------------------
-	// Pagination
-	// -------------------------------------------------------
 	if q.DisplayAmount <= 0 {
 		q.DisplayAmount = 50
 	}
@@ -179,9 +171,6 @@ func (DB) queryOffspaces(showUnpublished bool, q Query) ([]Offspace, error) {
 	sqlQuery += " LIMIT ? OFFSET ?"
 	args = append(args, q.DisplayAmount, offset)
 
-	// -------------------------------------------------------
-	// Execute
-	// -------------------------------------------------------
 	rows, err := dbAdapter.Db.Query(sqlQuery, args...)
 	if err != nil {
 		return nil, fmt.Errorf("queryOffspaces: %v", err)
@@ -212,7 +201,7 @@ func (DB) queryOffspaces(showUnpublished bool, q Query) ([]Offspace, error) {
 		}
 
 		if len(openingJSON) > 0 {
-			if err := json.Unmarshal(openingJSON, &off.openingTimes); err != nil {
+			if err := json.Unmarshal(openingJSON, &off.OpeningTimes); err != nil {
 				return nil, fmt.Errorf("opening_times JSON: %v", err)
 			}
 		}
@@ -237,38 +226,84 @@ func (DB) getOffspaceByKey(key string) (Offspace, error) {
 	return off, nil
 }
 
-func (DB) createOffspace(o OffspaceRest) error {
+func (DB) createOffspace(o OffspaceRest) (string, error) {
 	editUuid, err := uuid.NewRandom()
-	rows, err := dbAdapter.Db.Exec("INSERT INTO offspace (name, street, postcode, city, website, social_media, photo, published, edit_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		o.Name, o.Street, o.Postcode, o.City, o.Website, o.SocialMedia, o.Photo, false, editUuid)
 	if err != nil {
-		return err
+		return "", err
 	}
-	lastInsertId, err := rows.LastInsertId()
-	fmt.Println(fmt.Sprintf("Added row with id: %d, and contents %d %s %s %s %s %s %s %s", lastInsertId, o.ID, o.Name, o.Street, o.City, o.Postcode, o.Website, o.SocialMedia))
-	return err
+	openingJSON, err := json.Marshal(o.Opening)
+	if err != nil {
+		return "", fmt.Errorf("marshal opening_times: %v", err)
+	}
+
+	res, err := dbAdapter.Db.Exec(`
+        INSERT INTO offspace 
+            (name, street, postcode, city, website, social_media, photo, published, edit_key, opening_times)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+		o.Name,
+		o.Street,
+		o.Postcode,
+		o.City,
+		o.Website,
+		o.SocialMedia,
+		o.Photo,
+		false,       // published
+		editUuid,    // edit_key
+		openingJSON, // JSON data
+	)
+	if err != nil {
+		return "", err
+	}
+	id, _ := res.LastInsertId()
+	fmt.Printf("Created offspace %d (%s)\n", id, o.Name)
+	return editUuid.String(), nil
 }
 
 func (DB) updateOffspace(o Offspace, admin bool) error {
-	// published gets reset to false everytime the listing is edited by a non-admin
 	if !admin {
 		o.Published = false
 	}
-	rows, err := dbAdapter.Db.Exec("UPDATE offspace SET name = ?, street = ?, postcode = ?, city = ?, website = ?, social_media = ?, photo = ?, published = ?, edit_key = ? WHERE edit_key = ?",
-		o.Name, o.Street, o.Postcode, o.City, o.Website, o.SocialMedia, o.Photo, o.Published, o.EditKey, o.EditKey)
+	openingJSON, err := json.Marshal(o.OpeningTimes)
+	if err != nil {
+		return fmt.Errorf("marshal opening_times: %v", err)
+	}
+	_, err = dbAdapter.Db.Exec(`
+        UPDATE offspace SET 
+            name = ?, 
+            street = ?, 
+            postcode = ?, 
+            city = ?, 
+            website = ?, 
+            social_media = ?, 
+            photo = ?, 
+            published = ?, 
+            opening_times = ?
+        WHERE edit_key = ?
+    `,
+		o.Name,
+		o.Street,
+		o.Postcode,
+		o.City,
+		o.Website,
+		o.SocialMedia,
+		o.Photo,
+		o.Published,
+		openingJSON,
+		o.EditKey, // WHERE clause
+	)
 	if err != nil {
 		return err
 	}
-	lastInsertId, err := rows.LastInsertId()
-	fmt.Println(fmt.Sprintf("Added row with id: %d, and contents %s", lastInsertId, o.String()))
-	return err
+	fmt.Printf("Updated offspace %s (%d)\n", o.EditKey, o.Id)
+	return nil
 }
 
-func (o openingTimes) Value() (driver.Value, error) {
+func (o OpeningDay) Value() (driver.Value, error) {
 	return json.Marshal(o) // returns []byte containing JSON
 }
 
-func (o *openingTimes) Scan(src any) error {
+func (o *OpeningDay) Scan(src any) error {
 	if src == nil {
 		return nil
 	}

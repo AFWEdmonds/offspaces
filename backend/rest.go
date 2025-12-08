@@ -13,16 +13,16 @@ import (
 )
 
 type OffspaceRest struct {
-	ID          int              `json:"id"`
-	Name        string           `json:"name"`
-	Street      string           `json:"street"`
-	Postcode    string           `json:"postcode"`
-	City        string           `json:"city"`
-	Website     string           `json:"website"`
-	SocialMedia string           `json:"social_media"`
-	Photo       string           `json:"photo"` // base64 encoded by default if in JSON
-	Published   bool             `json:"published"`
-	Opening     OpeningTimesRest `json:"opening_times"`
+	ID          int          `json:"id"`
+	Name        string       `json:"name"`
+	Street      string       `json:"street"`
+	Postcode    string       `json:"postcode"`
+	City        string       `json:"city"`
+	Website     string       `json:"website"`
+	SocialMedia string       `json:"social_media"`
+	Photo       string       `json:"photo"` // base64 encoded by default if in JSON
+	Published   bool         `json:"published"`
+	Opening     OpeningTimes `json:"opening_times"`
 }
 
 type QueryRest struct {
@@ -30,27 +30,12 @@ type QueryRest struct {
 	Index          int    `json:"index"`
 	DisplayAmount  int    `json:"display_amount"`
 	RequireOpenNow bool   `json:"require_open_now"`
-	RequireShowOn  bool   `json:"require_show_on"`
+	RequireExhibOn bool   `json:"require_exhib_on"`
 	SearchName     bool   `json:"search_name"`
 	SearchAddress  bool   `json:"search_address"`
-	SearchShow     bool   `json:"search_show"`
+	SearchExhib    bool   `json:"search_exhib"`
 	SortBy         string `json:"sort_by"`
 	AdminKey       string `json:"admin_key"`
-}
-
-type OpeningDayRest struct {
-	Start string
-	End   string
-}
-
-type OpeningTimesRest struct {
-	Mon OpeningDay
-	Tue OpeningDay
-	Wed OpeningDay
-	Thu OpeningDay
-	Fri OpeningDay
-	Sat OpeningDay
-	Sun OpeningDay
 }
 
 func (o OffspaceRest) String() string {
@@ -112,6 +97,7 @@ func getOffspace(w http.ResponseWriter, r *http.Request) {
 func postOffspace(w http.ResponseWriter, r *http.Request) {
 	enableCORS(w)
 	data := OffspaceRest{}
+	var editKey string
 	fmt.Printf("got post request\n")
 	body, err := io.ReadAll(r.Body)
 	if err == nil {
@@ -120,8 +106,12 @@ func postOffspace(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 	} else {
-		if createOffspace(data) != nil {
+		editKey, err = createOffspace(data)
+		if err != nil || editKey == "" {
 			w.WriteHeader(http.StatusInternalServerError)
+		} else {
+			w.WriteHeader(http.StatusCreated)
+			io.WriteString(w, editKey)
 		}
 	}
 }
@@ -158,9 +148,9 @@ func queryToStruct(values map[string][]string, err error) QueryRest {
 		Index:          getInt(values, "index", 0),
 		DisplayAmount:  getInt(values, "displayAmount", 10),
 		RequireOpenNow: getBool(values, "requireOpenNow", false),
-		RequireShowOn:  getBool(values, "requireShowOn", true),
+		RequireExhibOn: getBool(values, "requireExhibOn", false),
 		SearchAddress:  getBool(values, "searchAddress", false),
-		SearchShow:     getBool(values, "searchShow", false),
+		SearchExhib:    getBool(values, "searchShow", false),
 		SortBy:         getString(values, "sortBy", "date"),
 		AdminKey:       getString(values, "adminKey", ""),
 	}

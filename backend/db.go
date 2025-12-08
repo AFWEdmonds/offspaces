@@ -12,21 +12,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type OpeningDay struct {
-	Start string
-	End   string
-}
-
-type OpeningTimes struct {
-	Mon OpeningDay
-	Tue OpeningDay
-	Wed OpeningDay
-	Thu OpeningDay
-	Fri OpeningDay
-	Sat OpeningDay
-	Sun OpeningDay
-}
-
 type Offspace struct {
 	Id           int
 	Name         string

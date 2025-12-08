@@ -57,8 +57,15 @@ func deleteOffspace() {
 func getOffspaces(params QueryRest) ([]OffspaceRest, error) {
 	var err error
 	var offspaces []Offspace
-	if params.AdminKey == *adminPassword {
-		offspaces, err = dbAdapter.queryOffspaces(true, mapQueryRestToQuery(params))
+	if params.AdminKey != "" {
+
+	}
+	if params.AdminKey != "" {
+		if params.AdminKey != "" && params.AdminKey == *adminPassword {
+			offspaces, err = dbAdapter.queryOffspaces(true, mapQueryRestToQuery(params))
+		} else {
+			return []OffspaceRest{}, errors.New("invalid admin key")
+		}
 	} else {
 		offspaces, err = dbAdapter.queryOffspaces(false, mapQueryRestToQuery(params))
 	}
@@ -104,6 +111,21 @@ func mapQueryRestToQuery(query QueryRest) Query {
 		SearchExhib:    query.SearchExhib,
 		SortBy:         query.SortBy,
 	}
+}
+
+type OpeningDay struct {
+	Start string `json:"start"`
+	End   string `json:"end"`
+}
+
+type OpeningTimes struct {
+	Mon OpeningDay `json:"mon"`
+	Tue OpeningDay `json:"tue"`
+	Wed OpeningDay `json:"wed"`
+	Thu OpeningDay `json:"thu"`
+	Fri OpeningDay `json:"fri"`
+	Sat OpeningDay `json:"sat"`
+	Sun OpeningDay `json:"sun"`
 }
 
 func isJPEG(imgBytes []byte) bool {

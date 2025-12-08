@@ -1,16 +1,16 @@
 const content = document.getElementById("#content");
-const data = []
+let offspaceData = []
 
 async function queryOffspaces() {
     try {
         const response = await fetch("http://localhost:3333/?" + formToQuery('form'), {
             method: "GET",
         });
-        const data = await response.json();
+        offspaceData = await response.json();
         document.getElementById("content").innerHTML = "";
         const frag = document.createDocumentFragment();
-        data.forEach(function (v, i) {
-            renderCard(frag, v);
+        offspaceData.forEach(function (v, i) {
+            renderCard(frag, v, false, i);
         })
         document.getElementById("content").appendChild(frag);
     } catch (e) {
@@ -53,9 +53,9 @@ function renderCard(frag, v, admin, index) {
         let ot;
         try {
             // v.OpeningTimes may already be JSON or a parsed object
-            ot = typeof v.OpeningTimes === "string"
-                ? JSON.parse(v.OpeningTimes)
-                : v.OpeningTimes;
+            ot = typeof v.opening_times === "string"
+                ? JSON.parse(v.opening_times)
+                : v.opening_times;
         } catch (e) {
             ot = null;
         }
@@ -76,9 +76,7 @@ function renderCard(frag, v, admin, index) {
 
             days.forEach(d => {
                 const day = ot[d];
-                if (!day || day.closed) {
-                    output += `${pretty[d]}: Closed<br>`;
-                } else {
+                if (day.start) {
                     const start = day.start || "";
                     const end   = day.end   || "";
                     if (start && end) {
@@ -109,11 +107,17 @@ function renderCard(frag, v, admin, index) {
     cardBody.appendChild(visitSM);
 
     if (admin) {
+        cardBody.appendChild(document.createElement('br'));
         const edit = document.createElement('button');
-        edit.className = 'btn';
+        edit.className = 'btn btn-warning';
+        edit.innerHTML = "Admin Edit";
         edit.type = 'button';
-        edit.onclick = () => editOffspace(data[index]);
-        cardBody.appendChild(edit);
+        edit.dataset.index = index; // string
+        edit.addEventListener('click', (e) => {
+            const idx = Number(e.currentTarget.dataset.index); // parse back to number
+            console.log(idx);
+            editOffspace(offspaceData[idx]);
+        });        cardBody.appendChild(edit);
     }
 
     card.appendChild(cardBody);

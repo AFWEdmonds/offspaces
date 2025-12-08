@@ -17,9 +17,8 @@
             <hr/>
             <h1>Offspaces</h1>
             <p>This is a list of offspaces in Frankfurt and Offenbach am Main</p>
-            <p>If you are responsible for an offspace you can add or edit an entry <a data-bs-toggle="modal"
-                                                                                      data-bs-target="#firstModal">here</a>
-            </p>
+            <p>If you are responsible for an offspace you can add or edit an entry here:</p>
+            <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#firstModal">Contribute</button>
             <hr/>
             <form id="form">
                 <div class="input-group">
@@ -241,7 +240,15 @@
                             <select class="form-select time-end" name="sun_end"></select>
                         </div>
                     </div>
-                    <input type="submit" value="Submit" id="submitButton"/>
+                    <div class="flex align-items-center mb-2">
+                        <div>
+                                <input class="form-check-input closed-check" type="checkbox" name="published">
+                                <label class="form-check-label">Published</label>
+                        </div>
+                        <div>
+                            <input type="submit" value="Submit" id="submitButton"/>
+                        </div>
+                    </div>
                 </form>
             </div>
         </div>
@@ -263,7 +270,6 @@
                             type="text"
                             id="editcodeoutput"
                             value=""
-                            readonly
                             style="padding: 4px 8px; width: 120px; text-align: center; font-family: monospace;"
                     >
                     <button type="button" id="copyBtn" class="btn">Copy</button>

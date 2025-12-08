@@ -10,21 +10,25 @@ let adminKey = "";
 
 async function getOffspace() {
     let text = editKey.value
-    if(text.length !== 36) {
+    if(!text) {
+        alert("Please enter a valid key.")
+    } else if(text.length !== 36) {
         try {
             const response = await fetch(`http://localhost:3333/?adminKey=${text}`, {
                 method: "GET",
             });
-            const data = await response.json();
+            offspaceData = await response.json();
+            adminKey = text;
             document.getElementById("content").innerHTML = "";
             const frag = document.createDocumentFragment();
-            data.forEach(function (v, i) {
-                renderCard(frag, v, true);
+            offspaceData.forEach(function (v, i) {
+                renderCard(frag, v, true, i);
             })
             document.getElementById("content").appendChild(frag);
             modalOne.hide();
         } catch (e) {
             console.error(e);
+            alert("No offspace with this edit code could be found.");
         }
     } else {
         try {
@@ -35,6 +39,8 @@ async function getOffspace() {
             fillForm(form, await response.json());
             imageElement.removeAttribute("required");
             imageElement.previousElementSibling.innerHTML = "To change the image, upload a new one below  (max 1Mb):";
+            const button = document.getElementById("submitButton")
+            button.innerHTML = "Update";
             modalOne.hide();
             modalTwo.show();
         } catch (e) {
@@ -49,6 +55,8 @@ async function newOffspace() {
     modalOne.hide();
     imageElement.setAttribute("required", "");
     imageElement.previousElementSibling.innerHTML = "Upload a representative picture of your offspace  (max 1Mb):";
+    const button = document.getElementById("submitButton")
+    button.innerHTML = "Submit";
     modalTwo.show();
 }
 
@@ -63,8 +71,8 @@ async function sendData() {
             body: blah,
         });
         modalTwo.hide();
+        editcode.innerHTML = await response.text();
         modalThree.show();
-        editcode.value = await response.text();
     } catch (e) {
         console.error(e);
     }
@@ -135,31 +143,74 @@ imageElement.addEventListener("change", (event) => {
 
 function fillForm(form, data) {
     Object.keys(data).forEach(key => {
+        if (key === "opening_times" || key === "openingTimes") return;
+
         const field = form.elements.namedItem(key);
-        if (!field) return; // skip if form field doesn't exist
+        if (!field) return;
 
         const value = data[key];
 
         if (field.type === "file") {
-            preview.src = data[key];
+            // For images
+            const preview = document.getElementById("preview");
+            if (preview) preview.src = value;
         } else {
             field.value = value;
         }
     });
+
+    const ot = data.opening_times || data.openingTimes;
+    if (!ot) return;
+
+    const days = ["mon","tue","wed","thu","fri","sat","sun"];
+
+    days.forEach(day => {
+        const d = ot[day];
+        const closedField = form.elements.namedItem(`${day}_closed`);
+        const startField  = form.elements.namedItem(`${day}_start`);
+        const endField    = form.elements.namedItem(`${day}_end`);
+
+        if (!closedField || !startField || !endField) return;
+
+        if (!d || d.closed) {
+            // It's closed
+            closedField.checked = true;
+
+            // Disable selects
+            startField.disabled = true;
+            endField.disabled = true;
+
+            // Clear values
+            startField.value = "";
+            endField.value = "";
+        } else {
+            closedField.checked = false;
+
+            // Enable selects
+            startField.disabled = false;
+            endField.disabled = false;
+
+            // Assign values (if present)
+            if (d.start) startField.value = d.start;
+            if (d.end)   endField.value   = d.end;
+        }
+    });
 }
 
+
 function editOffspace(data) {
-    fillForm(form);
+    fillForm(form, data);
     imageElement.removeAttribute("required");
     imageElement.previousElementSibling.innerHTML = "To change the image, upload a new one below  (max 1Mb):";
+    const button = document.getElementById("submitButton")
+    button.innerHTML = "Update";
     modalOne.hide();
     modalTwo.show();
 }
 
 document.getElementById('copyBtn').addEventListener('click', async () => {
-    const otpInput = document.getElementById('otp');
     try {
-        await navigator.clipboard.writeText(otpInput.value);
+        await navigator.clipboard.writeText(editcode.value);
         alert('Edit code copied to clipboard!');
     } catch (err) {
         console.error('Failed to copy edit code: ', err);

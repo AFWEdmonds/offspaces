@@ -1,27 +1,44 @@
 const content = document.getElementById("#content");
 let offspaceData = []
+let index = 0;
+let adminKey = "";
 
-async function queryOffspaces() {
-    try {
-        const response = await fetch("http://localhost:3333/?" + formToQuery('form'), {
-            method: "GET",
-        });
-        offspaceData = await response.json();
+
+async function queryOffspaces(append = false) {
+    const response = await fetch("http://localhost:3333/?" + formToQuery('form'));
+    const { data, total } = await response.json();
+
+    totalCount = total;
+
+    if (!append) {
         document.getElementById("content").innerHTML = "";
-        const frag = document.createDocumentFragment();
-        offspaceData.forEach(function (v, i) {
-            renderCard(frag, v, false, i);
-        })
-        document.getElementById("content").appendChild(frag);
-    } catch (e) {
-        console.error(e);
+        index = 0;
+        offspaceData = [];
+    }
+
+    const frag = document.createDocumentFragment();
+
+    data.forEach((v, i) => {
+        offspaceData.push(v);
+        renderCard(frag, v, false, offspaceData.length - 1);
+    });
+
+    document.getElementById("content").appendChild(frag);
+
+    // show/hide load more button
+    const loadMoreBtn = document.getElementById("loadMoreBtn");
+    if (offspaceData.length >= totalCount) {
+        loadMoreBtn.style.display = "none";
+    } else {
+        loadMoreBtn.style.display = "block";
     }
 }
 
 function formToQuery(formName) {
     const form = document.getElementById(formName);
     const formData = new FormData(form);
-    return new URLSearchParams(formData).toString();
+    let key = adminKey ? '&adminKey=' + adminKey : '';
+    return new URLSearchParams(formData).toString() + "&index=" + index + key;
 }
 
 
@@ -41,6 +58,9 @@ function renderCard(frag, v, admin, index) {
     const cardTitle = document.createElement('h5');
     cardTitle.className = 'card-title';
     cardTitle.innerHTML = v.name;
+    if (!v.published) {
+        v.name += '(Unpublished)';
+    }
     cardBody.appendChild(cardTitle);
 
     const cardText = document.createElement('p');
@@ -116,7 +136,7 @@ function renderCard(frag, v, admin, index) {
         edit.addEventListener('click', (e) => {
             const idx = Number(e.currentTarget.dataset.index); // parse back to number
             console.log(idx);
-            editOffspace(offspaceData[idx]);
+            editOffspace(offspaceData.data[idx]);
         });        cardBody.appendChild(edit);
     }
 

@@ -66,7 +66,7 @@ func connectDb(username *string, password *string) {
 	dbAdapter.Db = newDb
 }
 
-func (DB) queryOffspaces(showUnpublished bool, q Query) ([]Offspace, error) {
+func (DB) queryOffspaces(showUnpublished bool, q Query) (int, []Offspace, error) {
 	// language=SQL
 	base := `SELECT 
                 id, name, street, postcode, city,
@@ -132,9 +132,11 @@ func (DB) queryOffspaces(showUnpublished bool, q Query) ([]Offspace, error) {
 		args = append(args, nowStr, nowStr)
 	}
 
+	sqlCountQuery := "SELECT COUNT(*) FROM offspace"
 	sqlQuery := base
 	if len(conditions) > 0 {
 		sqlQuery += " WHERE " + strings.Join(conditions, " AND ")
+		sqlCountQuery += " WHERE " + strings.Join(conditions, " AND ")
 	}
 
 	switch q.SortBy {
@@ -158,11 +160,17 @@ func (DB) queryOffspaces(showUnpublished bool, q Query) ([]Offspace, error) {
 
 	rows, err := dbAdapter.Db.Query(sqlQuery, args...)
 	if err != nil {
-		return nil, fmt.Errorf("queryOffspaces: %v", err)
+		return 0, nil, fmt.Errorf("queryOffspaces: %v", err)
 	}
 	defer rows.Close()
 
 	var result []Offspace
+
+	var total int
+	err = dbAdapter.Db.QueryRow(sqlCountQuery).Scan(&total)
+	if err != nil {
+		return 0, nil, err
+	}
 
 	for rows.Next() {
 		var off Offspace
@@ -182,19 +190,19 @@ func (DB) queryOffspaces(showUnpublished bool, q Query) ([]Offspace, error) {
 			&openingJSON,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("scan: %v", err)
+			return 0, nil, fmt.Errorf("scan: %v", err)
 		}
 
 		if len(openingJSON) > 0 {
 			if err := json.Unmarshal(openingJSON, &off.OpeningTimes); err != nil {
-				return nil, fmt.Errorf("opening_times JSON: %v", err)
+				return 0, nil, fmt.Errorf("opening_times JSON: %v", err)
 			}
 		}
 
 		result = append(result, off)
 	}
 
-	return result, nil
+	return total, result, nil
 }
 
 func (DB) getOffspaceByKey(key string) (Offspace, error) {

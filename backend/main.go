@@ -54,22 +54,23 @@ func deleteOffspace() {
 	//todo
 }
 
-func getOffspaces(params QueryRest) ([]OffspaceRest, error) {
+func getOffspaces(params QueryRest) (OffspaceListResponse, error) {
 	var err error
+	var total int
 	var offspaces []Offspace
 	if params.AdminKey != "" {
 
 	}
 	if params.AdminKey != "" {
 		if params.AdminKey != "" && params.AdminKey == *adminPassword {
-			offspaces, err = dbAdapter.queryOffspaces(true, mapQueryRestToQuery(params))
+			total, offspaces, err = dbAdapter.queryOffspaces(true, mapQueryRestToQuery(params))
 		} else {
-			return []OffspaceRest{}, errors.New("invalid admin key")
+			return OffspaceListResponse{}, errors.New("invalid admin key")
 		}
 	} else {
-		offspaces, err = dbAdapter.queryOffspaces(false, mapQueryRestToQuery(params))
+		total, offspaces, err = dbAdapter.queryOffspaces(false, mapQueryRestToQuery(params))
 	}
-	return mapOffspaceToRestArray(offspaces), err
+	return mapOffspacesToResponse(total, offspaces), err
 }
 
 func getOffspaceByKey(key string) (OffspaceRest, error) {
@@ -77,12 +78,12 @@ func getOffspaceByKey(key string) (OffspaceRest, error) {
 	return mapOffspaceToRest(offspace), err
 }
 
-func mapOffspaceToRestArray(offspace []Offspace) []OffspaceRest {
+func mapOffspacesToResponse(total int, offspace []Offspace) OffspaceListResponse {
 	offspaces := make([]OffspaceRest, len(offspace))
 	for i := 0; i < len(offspace); i++ {
 		offspaces[i] = mapOffspaceToRest(offspace[i])
 	}
-	return offspaces
+	return OffspaceListResponse{total, offspaces}
 }
 
 func mapOffspaceToRest(offspace Offspace) OffspaceRest {

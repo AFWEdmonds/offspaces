@@ -38,6 +38,11 @@ type QueryRest struct {
 	AdminKey       string `json:"admin_key"`
 }
 
+type OffspaceListResponse struct {
+	Total int            `json:"total"`
+	Data  []OffspaceRest `json:"data"`
+}
+
 func (o OffspaceRest) String() string {
 	return fmt.Sprintf("%d, %s, %s, %s, %s, %s, %s, %s, %s", o.ID, o.Name, o.Street, o.Postcode, o.City, o.Website, o.SocialMedia, o.Photo)
 }
@@ -59,7 +64,7 @@ func startServer() {
 func getRoot(w http.ResponseWriter, r *http.Request) {
 	enableCORS(w)
 	fmt.Printf("got / get request\n")
-	var offspaces []OffspaceRest
+	var offspaces OffspaceListResponse
 	offspaces, err := getOffspaces(queryToStruct(url.ParseQuery(r.URL.RawQuery)))
 	if err != nil {
 		fmt.Errorf("read error: %v", err)

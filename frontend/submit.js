@@ -6,7 +6,6 @@ const modalOne = new bootstrap.Modal(document.querySelector("#firstModal"));
 const modalTwo = new bootstrap.Modal(document.querySelector("#editModal"));
 const modalThree = new bootstrap.Modal(document.querySelector("#messageModal"));
 const editcode = new bootstrap.Modal(document.querySelector("#editcodeoutput"));
-let adminKey = "";
 
 async function getOffspace() {
     let text = editKey.value
@@ -21,7 +20,7 @@ async function getOffspace() {
             adminKey = text;
             document.getElementById("content").innerHTML = "";
             const frag = document.createDocumentFragment();
-            offspaceData.forEach(function (v, i) {
+            offspaceData.data.forEach(function (v, i) {
                 renderCard(frag, v, true, i);
             })
             document.getElementById("content").appendChild(frag);
